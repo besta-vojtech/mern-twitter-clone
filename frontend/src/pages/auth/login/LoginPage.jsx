@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+
 
 import XSvg from "../../../components/svgs/X";
 
@@ -12,16 +15,45 @@ const LoginPage = () => {
 		password: "",
 	});
 
+	const queryClient = useQueryClient(); // Get the QueryClient instance to invalidate queries after login
+
+	const { mutate: loginMutation, isError, isPending, error } = useMutation({
+		mutationFn: async ({ username, password }) => {
+			try {
+				const res = await fetch("/api/auth/login", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ username, password }),
+				});
+
+				const data = await res.json();
+				if (!res.ok) {
+					throw new Error(data.error) || "Failed to log in"; // For HTTP error codes like 400, 500, etc. If there is not an error message in the response, use a default message
+				}
+
+				console.log(data);
+			} catch (error) {
+				console.error(error);
+				throw error; // Re-throw the error to be caught by the mutation's onError handler
+			}
+		},
+		onSuccess: () => {
+			toast.success("Logged in successfully!"); // Show success message
+			queryClient.invalidateQueries({ queryKey: ["authUser"] }); // Invalidate the authUser query to refetch user data
+		},
+	});
+
+
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		console.log(formData);
+		loginMutation(formData); // call the mutation function with form data
 	};
 
 	const handleInputChange = (e) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
-
-	const isError = false;
 
 	return (
 		<div className='max-w-screen-xl mx-auto flex h-screen'>
@@ -55,8 +87,10 @@ const LoginPage = () => {
 							value={formData.password}
 						/>
 					</label>
-					<button className='btn rounded-full btn-primary text-white'>Login</button>
-					{isError && <p className='text-red-500'>Something went wrong</p>}
+					<button className='btn rounded-full btn-primary text-white'>
+						{isPending ? "Logging in..." : "Log in"}
+					</button>
+					{isError && <p className='text-red-500'>{error.message}</p>}
 				</form>
 				<div className='flex flex-col gap-2 mt-4'>
 					<p className='text-white text-lg'>{"Don't"} have an account?</p>
