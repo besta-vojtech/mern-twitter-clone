@@ -41,7 +41,32 @@ const Sidebar = () => {
 		},
 	});
 
-	const { data: authUser } = useQuery({ queryKey: ["authUser"] }); // Fetch the authenticated user data to display in the sidebar
+	// Fetching the authenticated user data to display in the sidebar
+	const { data: authUser } = useQuery({
+		queryKey: ["authUser"],
+		queryFn: async () => {
+			try {
+				const res = await fetch("/api/auth/me", {
+					method: "GET",
+				});
+
+				const data = await res.json();
+				if (data.error) {
+					return null;
+				}
+				if (!res.ok) {
+					throw new Error(data.error) || "Something went wrong";
+				}
+
+				return data;
+			} catch (error) {
+				console.error(error);
+				throw new Error(error);
+			}
+		},
+
+		retry: false, // do not retry the query if it fails
+	});
 
 	return (
 		<div className='md:flex-[2_2_0] w-18 max-w-52'>

@@ -3,28 +3,90 @@ import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
 import { FaRegBookmark } from "react-icons/fa6";
 import { FaTrash } from "react-icons/fa";
+import LoadingSpinner from "./LoadingSpinner.jsx"
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 
 const Post = ({ post }) => {
+	const quueryClient = useQueryClient();
+
 	const [comment, setComment] = useState("");
+
 	const postOwner = post.user;
+
 	const isLiked = false;
 
-	const isMyPost = true;
+	// Fetching the authenticated user to check if the post belongs to them
+	const { data: authUser, isLoading } = useQuery({
+		queryKey: ["authUser"],
+		queryFn: async () => {
+			try {
+				const res = await fetch("/api/auth/me", {
+					method: "GET",
+				});
+
+				const data = await res.json();
+				if (data.error) {
+					return null;
+				}
+				if (!res.ok) {
+					throw new Error(data.error) || "Something went wrong";
+				}
+
+				return data;
+			} catch (error) {
+				console.error(error);
+				throw new Error(error);
+			}
+		},
+
+		retry: false, // do not retry the query if it fails
+	});
+	const isMyPost = authUser?._id === postOwner._id;
 
 	const formattedDate = "1h";
 
 	const isCommenting = false;
 
-	const handleDeletePost = () => {};
+	// Deleting a post
+	const { mutate: deletePost, isPending } = useMutation({
+		mutationFn: async () => {
+			try {
+				const res = await fetch(`/api/posts/${post._id}`, {
+					method: "DELETE",
+				});
+
+				const data = await res.json();
+
+				if (!res.ok) {
+					throw new Error(data.error || "Something went wrong");
+				}
+
+				return data;
+			} catch (error) {
+				throw new Error(error);
+			}
+		},
+		onSuccess: () => {
+			toast.success("Post deleted successfully");
+
+			//Invalidate the posts query to refetch the posts
+			quueryClient.invalidateQueries({ queryKey: ["posts"] });
+		}
+	});
+
+	const handleDeletePost = () => {
+		deletePost();
+	};
 
 	const handlePostComment = (e) => {
 		e.preventDefault();
 	};
 
-	const handleLikePost = () => {};
+	const handleLikePost = () => { };
 
 	return (
 		<>
@@ -46,7 +108,9 @@ const Post = ({ post }) => {
 						</span>
 						{isMyPost && (
 							<span className='flex justify-end flex-1'>
-								<FaTrash className='cursor-pointer hover:text-red-500' onClick={handleDeletePost} />
+								{!isPending && (<FaTrash className='cursor-pointer hover:text-red-500' onClick={handleDeletePost} />)}
+
+								{isPending && <LoadingSpinner size='sm' />}
 							</span>
 						)}
 					</div>
@@ -136,9 +200,8 @@ const Post = ({ post }) => {
 								{isLiked && <FaRegHeart className='w-4 h-4 cursor-pointer text-pink-500 ' />}
 
 								<span
-									className={`text-sm text-slate-500 group-hover:text-pink-500 ${
-										isLiked ? "text-pink-500" : ""
-									}`}
+									className={`text-sm text-slate-500 group-hover:text-pink-500 ${isLiked ? "text-pink-500" : ""
+										}`}
 								>
 									{post.likes.length}
 								</span>
