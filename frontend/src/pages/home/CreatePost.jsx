@@ -106,7 +106,7 @@ const CreatePost = () => {
             {isPending ? "Posting..." : "Post"}
           </button>
         </div>
-        {isError && <div className='text-red-500'>{error.mesage}</div>}
+        {isError && <div className='text-red-500'>{error.message}</div>}
       </form>
     </div>
   );
