@@ -5,20 +5,19 @@ import { FaRegBookmark } from "react-icons/fa6";
 import { FaTrash } from "react-icons/fa";
 import LoadingSpinner from "./LoadingSpinner.jsx"
 
+import { formatPostDate } from "../../utils/db/date/index.js";
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 
 const Post = ({ post }) => {
-	const queryClient = useQueryClient();
-
 	const [comment, setComment] = useState("");
 
-	const postOwner = post.user;
+	const queryClient = useQueryClient();
 
-
-	// Fetching the authenticated user to check if the post belongs to them
+	// Fetching the authenticated user
 	const { data: authUser, isLoading } = useQuery({
 		queryKey: ["authUser"],
 		queryFn: async () => {
@@ -44,13 +43,11 @@ const Post = ({ post }) => {
 
 		retry: false, // do not retry the query if it fails
 	});
-	const isLiked = post.likes.includes(authUser?._id);
 
+	const postOwner = post.user;
 	const isMyPost = authUser?._id === postOwner._id;
-
-	const formattedDate = "1h";
-
-	const isCommenting = false;
+	const isLiked = post.likes.includes(authUser?._id);
+	const formattedDate = formatPostDate(post.createdAt);
 
 	// Deleting a post
 	const { mutate: deletePost, isPending: isDeleting } = useMutation({
@@ -99,7 +96,7 @@ const Post = ({ post }) => {
 		},
 		onSuccess: (updatedLikes) => {
 			// This is not the best UX, because it will refetch all posts
-				// queryClient.invalidateQueries({ queryKey: ["posts"] });
+			// queryClient.invalidateQueries({ queryKey: ["posts"] });
 
 			// Instead, we can just update the post in the cache
 			queryClient.setQueryData(["posts"], (oldData) => {
@@ -116,12 +113,46 @@ const Post = ({ post }) => {
 		}
 	});
 
+	// Commenting on a post
+	const { mutate: commentPost, isPending: isCommenting } = useMutation({
+		mutationFn: async () => {
+			try {
+				const res = await fetch(`/api/posts/comment/${post._id}`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ text: comment }),
+				});
+
+				const data = await res.json();
+				if (!res.ok) {
+					throw new Error(data.error || "Something went wrong");
+				}
+
+				return data;
+			} catch (error) {
+				throw new Error(error.message);
+			}
+		},
+		onSuccess: (post) => {
+			toast.success("Comment posted successfully");
+			setComment(""); // Clear the comment input
+			queryClient.invalidateQueries({ queryKey: ["posts"] });
+		},
+		onError: (error) => {
+			toast.error(error.message);
+		}
+	});
+
 	const handleDeletePost = () => {
 		deletePost();
 	};
 
 	const handlePostComment = (e) => {
 		e.preventDefault();
+		if (isCommenting) return; // Prevent multiple clicks while commenting
+		commentPost();
 	};
 
 	const handleLikePost = () => {
