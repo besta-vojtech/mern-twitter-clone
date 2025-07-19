@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { formatMemberSinceDate } from "../../utils/date/index.js";
 import useFollow from "../../hooks/useFollow.jsx";
+import useUpdateUserProfile from "../../hooks/useUpdateUserProfile.jsx";
 
 import Posts from "../../components/common/Posts";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
@@ -14,7 +15,8 @@ import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
 import LoadingSpinner from "../../components/common/LoadingSpinner.jsx";
-import toast from "react-hot-toast";
+
+
 
 const ProfilePage = () => {
 	const [coverImg, setCoverImg] = useState(null);
@@ -94,39 +96,8 @@ const ProfilePage = () => {
 		}
 	});
 
-	// mutation for updating profile and cover images
-	const { mutate: updateImages, isPending: isUpdatingImages } = useMutation({
-		mutationFn: async () => {
-			try {
-				const res = await fetch("/api/users/update", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json"
-					},
-					body: JSON.stringify({
-						coverImg,
-						profileImg
-					})
-				});
-			} catch (error) {
-				throw new Error(error.message);
-			}
-		},
-		onSuccess: () => {
-			toast.success("Profile updated successfully");
-			Promise.all([
-				queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
-				queryClient.invalidateQueries({ queryKey: ["authUser"] })
-			])
-				.then(() => {
-					setCoverImg(null);
-					setProfileImg(null);
-				});
-		},
-		onError: (error) => {
-			toast.error(error.message);
-		}
-	})
+	// Custom hook to update the cover and profile images (update the user profile)
+	const { updateProfile, isUpdating } = useUpdateUserProfile(authUser);
 
 	return (
 		<>
@@ -192,7 +163,7 @@ const ProfilePage = () => {
 								</div>
 							</div>
 							<div className='flex justify-end px-4 mt-5'>
-								{isMyProfile && <EditProfileModal  authUser={authUser}/>}
+								{isMyProfile && <EditProfileModal authUser={authUser} />}
 								{!isMyProfile && (
 									<button
 										className='btn btn-outline rounded-full btn-sm'
@@ -205,9 +176,13 @@ const ProfilePage = () => {
 								{(coverImg || profileImg) && (
 									<button
 										className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
-										onClick={() => updateImages()}
+										onClick={() => {
+											updateProfile({ coverImg, profileImg });
+											setCoverImg(null);
+											setProfileImg(null);
+										}}
 									>
-										{isUpdatingImages ? <LoadingSpinner size="sm" /> : "Save Changes"}
+										{isUpdating ? <LoadingSpinner size="sm" /> : "Save Changes"}
 									</button>
 								)}
 							</div>

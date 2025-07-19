@@ -1,13 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-import { useQueryClient, useMutation } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import useUpdateUserProfile from "../../hooks/useUpdateUserProfile.jsx";
+
 import LoadingSpinner from "../../components/common/LoadingSpinner.jsx";
 
 const EditProfileModal = ({ authUser }) => {
-	const queryClient = useQueryClient();
-	const navigate = useNavigate();
 
 	const [formData, setFormData] = useState({
 		fullName: "",
@@ -24,57 +21,8 @@ const EditProfileModal = ({ authUser }) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
 
-	// Mutation for updating the user profile
-	const { mutate: updateProfile, isPending: isUpdating } = useMutation({
-		mutationFn: async () => {
-			try {
-				const res = await fetch("/api/users/update", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json"
-					},
-					body: JSON.stringify(formData)
-				});
-
-				const data = await res.json();
-				if (!res.ok) {
-					throw new Error(data.error || "Something went wrong");
-				}
-
-				return data;
-			} catch (error) {
-				throw new Error(error.message);
-			}
-		},
-		onSuccess: (data) => {
-			toast.success("Profile updated successfully");
-
-			// If the username has been changed we need to update the URL with the new username, otherwise the invalidatin will not work (it will try to fetch data from URL with the old username which already does not exist	in the DB)
-			if (data.username !== authUser.username) { // data.usrname is the API response with the updated user data // authUser.username is the username from the authenticated user data (still the old one until the authUser is refetched)
-				navigate(`/profile/${data.username}`);
-			}
-
-			Promise.all([
-				queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
-				queryClient.invalidateQueries({ queryKey: ["authUser"] }) // for case when authUser updates his profile so the logout div in the botton left is also updated
-			])
-				.then(() => {
-					setFormData({
-						fullName: "",
-						username: "",
-						email: "",
-						bio: "",
-						link: "",
-						newPassword: "",
-						currentPassword: "",
-					});
-				});
-		},
-		onError: (error) => {
-			console.error(error.message);
-			toast.error(error.message);
-		}
-	});
+	// Custom hook that updates the user profile
+	const { updateProfile, isUpdating } = useUpdateUserProfile(authUser, setFormData);
 
 	// Effect to pre-fill the form with the authenticated user's data
 	useEffect(() => {
@@ -106,7 +54,7 @@ const EditProfileModal = ({ authUser }) => {
 						className='flex flex-col gap-4'
 						onSubmit={(e) => {
 							e.preventDefault();
-							updateProfile();
+							updateProfile(formData);
 						}}
 					>
 						<div className='flex flex-wrap gap-2'>
