@@ -200,7 +200,7 @@ const Post = ({ post }) => {
 						)}
 					</div>
 					<div className='flex justify-between mt-3'>
-						<div className='flex gap-4 items-center w-2/3 justify-between'>
+						<div className='flex gap-4 items-center'>
 							<div
 								className='flex gap-1 items-center cursor-pointer group'
 								onClick={() => document.getElementById("comments_modal" + post._id).showModal()}
@@ -261,8 +261,8 @@ const Post = ({ post }) => {
 								</form>
 							</dialog>
 							<div className='flex gap-1 items-center group cursor-pointer'>
-								<BiRepost className='w-6 h-6  text-slate-500 group-hover:text-green-500' />
-								<span className='text-sm text-slate-500 group-hover:text-green-500'>0</span>
+								{/* {<BiRepost className='w-6 h-6  text-slate-500 group-hover:text-green-500' />} */} {/* Repost icon is not implemented yet */}
+								{/* {<span className='text-sm text-slate-500 group-hover:text-green-500'>0</span>} */} {/* Repost count is not implemented yet */}
 							</div>
 							<div className='flex gap-1 items-center group cursor-pointer' onClick={handleLikePost}>
 								{isLiking && <LoadingSpinner size='sm' />}
