@@ -5,7 +5,7 @@ import { FaRegBookmark } from "react-icons/fa6";
 import { FaTrash } from "react-icons/fa";
 import LoadingSpinner from "./LoadingSpinner.jsx"
 
-import { formatPostDate } from "../../utils/db/date/index.js";
+import { formatPostDate } from "../../utils/date/index.js";
 
 import { useState } from "react";
 import { Link } from "react-router-dom";

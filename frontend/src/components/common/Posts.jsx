@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Post from "./Post";
 import PostSkeleton from "../skeletons/PostSkeleton";
 
-const Posts = ({ feedType }) => {
+const Posts = ({ feedType, username, userId }) => {
 
 	const getPostEndpoint = (feedType) => {
 		switch (feedType) {
@@ -12,6 +12,10 @@ const Posts = ({ feedType }) => {
 				return "/api/posts/all";
 			case "following":
 				return "/api/posts/following";
+			case "posts":
+				return `/api/posts/user/${username}`;
+			case "likes":
+				return `/api/posts/likes/${userId}`;
 			default:
 				return "/api/posts/all";
 		}
@@ -19,6 +23,7 @@ const Posts = ({ feedType }) => {
 
 	const POST_ENDPOINT = getPostEndpoint(feedType);
 
+	// Fetching posts based on the feed type
 	const { data: posts, isLoading, isError, error, refetch, isRefetching } = useQuery({
 		queryKey: ["posts"],
 		queryFn: async () => {
@@ -38,8 +43,8 @@ const Posts = ({ feedType }) => {
 	});
 
 	useEffect(() => {
-		refetch(); // Refetch posts when feedType changes
-	}, [feedType, refetch]);
+		refetch(); // Refetch posts when feedType or username in URL changes changes
+	}, [feedType, username, refetch]);
 
 	return (
 		<>
