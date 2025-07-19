@@ -1,6 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const EditProfileModal = () => {
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import LoadingSpinner from "../../components/common/LoadingSpinner.jsx";
+
+const EditProfileModal = ({ authUser }) => {
+	const queryClient = useQueryClient();
+	const navigate = useNavigate();
+
 	const [formData, setFormData] = useState({
 		fullName: "",
 		username: "",
@@ -11,9 +19,77 @@ const EditProfileModal = () => {
 		currentPassword: "",
 	});
 
+
 	const handleInputChange = (e) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
+
+	// Mutation for updating the user profile
+	const { mutate: updateProfile, isPending: isUpdating } = useMutation({
+		mutationFn: async () => {
+			try {
+				const res = await fetch("/api/users/update", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify(formData)
+				});
+
+				const data = await res.json();
+				if (!res.ok) {
+					throw new Error(data.error || "Something went wrong");
+				}
+
+				return data;
+			} catch (error) {
+				throw new Error(error.message);
+			}
+		},
+		onSuccess: (data) => {
+			toast.success("Profile updated successfully");
+
+			// If the username has been changed we need to update the URL with the new username, otherwise the invalidatin will not work (it will try to fetch data from URL with the old username which already does not exist	in the DB)
+			if (data.username !== authUser.username) { // data.usrname is the API response with the updated user data // authUser.username is the username from the authenticated user data (still the old one until the authUser is refetched)
+				navigate(`/profile/${data.username}`);
+			}
+
+			Promise.all([
+				queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
+				queryClient.invalidateQueries({ queryKey: ["authUser"] }) // for case when authUser updates his profile so the logout div in the botton left is also updated
+			])
+				.then(() => {
+					setFormData({
+						fullName: "",
+						username: "",
+						email: "",
+						bio: "",
+						link: "",
+						newPassword: "",
+						currentPassword: "",
+					});
+				});
+		},
+		onError: (error) => {
+			console.error(error.message);
+			toast.error(error.message);
+		}
+	});
+
+	// Effect to pre-fill the form with the authenticated user's data
+	useEffect(() => {
+		if (authUser) {
+			setFormData({
+				fullName: authUser.fullName,
+				username: authUser.username,
+				email: authUser.email,
+				bio: authUser.bio,
+				link: authUser.link,
+				newPassword: "",
+				currentPassword: "",
+			});
+		}
+	}, [authUser]);
 
 	return (
 		<>
@@ -30,7 +106,7 @@ const EditProfileModal = () => {
 						className='flex flex-col gap-4'
 						onSubmit={(e) => {
 							e.preventDefault();
-							alert("Profile updated successfully");
+							updateProfile();
 						}}
 					>
 						<div className='flex flex-wrap gap-2'>
@@ -94,7 +170,9 @@ const EditProfileModal = () => {
 							name='link'
 							onChange={handleInputChange}
 						/>
-						<button className='btn btn-primary rounded-full btn-sm text-white'>Update</button>
+						<button className='btn btn-primary rounded-full btn-sm text-white'>
+							{isUpdating ? <LoadingSpinner size="sm" /> : "Update Profile"}
+						</button>
 					</form>
 				</div>
 				<form method='dialog' className='modal-backdrop'>

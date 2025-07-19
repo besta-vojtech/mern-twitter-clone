@@ -1,19 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { formatMemberSinceDate } from "../../utils/date/index.js";
+import useFollow from "../../hooks/useFollow.jsx";
 
 import Posts from "../../components/common/Posts";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
 import EditProfileModal from "./EditProfileModal";
 
-import { POSTS } from "../../utils/db/dummy";
-
 import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
+import LoadingSpinner from "../../components/common/LoadingSpinner.jsx";
+import toast from "react-hot-toast";
 
 const ProfilePage = () => {
 	const [coverImg, setCoverImg] = useState(null);
@@ -23,11 +24,13 @@ const ProfilePage = () => {
 	const coverImgRef = useRef(null);
 	const profileImgRef = useRef(null);
 
-	const isMyProfile = true
+	const queryClient = useQueryClient();
 
-	const { username } = useParams();
+	const { data: authUser } = useQuery({ queryKey: ["authUser"] }); // fetching the authenticated user data
+	const { username } = useParams(); // getting the username from the URL
 
-
+	// calling the custom hook for follow functionality
+	const { follow, isPending } = useFollow();
 
 	// fetching the user profile data
 	const { data: user, isLoading, refetch, isRefetching } = useQuery({
@@ -46,13 +49,21 @@ const ProfilePage = () => {
 		}
 	});
 
+	// checking if the profile belongs to the authenticated user
+	const isMyProfile = authUser._id === user?._id;
+
+	// checking if the authenticated user is following the profile user
+	const amIFollowing = authUser.following.includes(user?._id);
+
 	// refetching the user profile data when the username in the URL changes
 	useEffect(() => {
 		refetch();
 	}, [username, refetch]);
 
+	// formatting the Member since date
 	const memberSinceDate = formatMemberSinceDate(user?.createdAt);
 
+	// Function to handle image (states) change for cover and profile images
 	const handleImgChange = (e, state) => {
 		const file = e.target.files[0];
 		if (file) {
@@ -64,6 +75,58 @@ const ProfilePage = () => {
 			reader.readAsDataURL(file);
 		}
 	};
+
+	// Calculating the number of posts by the user
+	const { data: userPostCount, isLoading: userPostCountLoading } = useQuery({
+		queryKey: ["userPostsCount"],
+		queryFn: async () => {
+			try {
+				const res = await fetch(`/api/posts/user/${username}`);
+				const data = await res.json();
+				if (!res.ok) {
+					throw new Error(data.error || "Something went wrong");
+				}
+
+				return data.length;
+			} catch (error) {
+				throw new Error(error.message);
+			}
+		}
+	});
+
+	// mutation for updating profile and cover images
+	const { mutate: updateImages, isPending: isUpdatingImages } = useMutation({
+		mutationFn: async () => {
+			try {
+				const res = await fetch("/api/users/update", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify({
+						coverImg,
+						profileImg
+					})
+				});
+			} catch (error) {
+				throw new Error(error.message);
+			}
+		},
+		onSuccess: () => {
+			toast.success("Profile updated successfully");
+			Promise.all([
+				queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
+				queryClient.invalidateQueries({ queryKey: ["authUser"] })
+			])
+				.then(() => {
+					setCoverImg(null);
+					setProfileImg(null);
+				});
+		},
+		onError: (error) => {
+			toast.error(error.message);
+		}
+	})
 
 	return (
 		<>
@@ -80,7 +143,7 @@ const ProfilePage = () => {
 								</Link>
 								<div className='flex flex-col'>
 									<p className='font-bold text-lg'>{user?.fullName}</p>
-									<span className='text-sm text-slate-500'>{POSTS?.length} posts</span>
+									<span className='text-sm text-slate-500'>{userPostCount} posts</span>
 								</div>
 							</div>
 							{/* COVER IMG */}
@@ -129,21 +192,22 @@ const ProfilePage = () => {
 								</div>
 							</div>
 							<div className='flex justify-end px-4 mt-5'>
-								{isMyProfile && <EditProfileModal />}
+								{isMyProfile && <EditProfileModal  authUser={authUser}/>}
 								{!isMyProfile && (
 									<button
 										className='btn btn-outline rounded-full btn-sm'
-										onClick={() => alert("Followed successfully")}
+										onClick={() => follow(user?._id)}
 									>
-										Follow
+										{isPending && <LoadingSpinner size="sm" />}
+										{!isPending && amIFollowing ? "Unfollow" : "Follow"}
 									</button>
 								)}
 								{(coverImg || profileImg) && (
 									<button
 										className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
-										onClick={() => alert("Profile updated successfully")}
+										onClick={() => updateImages()}
 									>
-										Update
+										{isUpdatingImages ? <LoadingSpinner size="sm" /> : "Save Changes"}
 									</button>
 								)}
 							</div>

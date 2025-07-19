@@ -49,7 +49,7 @@ const Post = ({ post }) => {
 	const isLiked = post.likes.includes(authUser?._id);
 	const formattedDate = formatPostDate(post.createdAt);
 
-	// Deleting a post
+	// Deleting a post mutation
 	const { mutate: deletePost, isPending: isDeleting } = useMutation({
 		mutationFn: async () => {
 			try {
@@ -70,13 +70,16 @@ const Post = ({ post }) => {
 		},
 		onSuccess: () => {
 			toast.success("Post deleted successfully");
-
-			//Invalidate the posts query to refetch the posts
-			queryClient.invalidateQueries({ queryKey: ["posts"] });
+			Promise.all([
+				//Invalidate the posts query to refetch the posts
+				queryClient.invalidateQueries({ queryKey: ["posts"] }),
+				// Invalidate the user posts count query to update the count
+				queryClient.invalidateQueries({ queryKey: ["userPostsCount"] })
+			])
 		}
 	});
 
-	// Liking a post
+	// Liking a post mutation
 	const { mutate: likePost, isPending: isLiking } = useMutation({
 		mutationFn: async () => {
 			try {
@@ -113,7 +116,7 @@ const Post = ({ post }) => {
 		}
 	});
 
-	// Commenting on a post
+	// Commenting on a post mutaion
 	const { mutate: commentPost, isPending: isCommenting } = useMutation({
 		mutationFn: async () => {
 			try {
