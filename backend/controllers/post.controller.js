@@ -3,6 +3,7 @@ import Post from "../models/post.model.js";
 import Notification from "../models/notification.model.js";
 
 import { v2 as cloudinary } from "cloudinary";
+import { populate } from "dotenv";
 
 export const createPost = async (req, res) => {
     try {
@@ -247,6 +248,75 @@ export const getUserPosts = async (req, res) => {
         res.status(200).json(posts);
     } catch (error) {
         console.error("Error in getUserPosts controller", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+export const saveUnsavePost = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const postId = req.params.id;
+
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const isSaved = user.savedPosts.includes(postId); // check if the post is already saved by the user
+
+        // if the post is not saved, save it
+        if (!isSaved) {
+            user.savedPosts.push(postId);
+            await user.save();
+            return res.status(200).json({ message: "Post saved successfully" });
+        }
+
+        // if the post is already saved, unsave it (remove it from saved posts)
+        if (isSaved) {
+            user.savedPosts = user.savedPosts.filter(id => id.toString() !== postId.toString());
+            await user.save();
+            return res.status(200).json({ message: "Post unsaved successfully" });
+        }
+
+    } catch (error) {
+        console.error("Error in savePost controller", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+export const getSavedPosts = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const user = await User.findById(userId)
+            .populate({
+                path: "savedPosts",
+                populate: [
+                    {
+                        path: "user",
+                        select: "-password",
+                    },
+                    {
+                        path: "comments.user",
+                        select: "-password",
+                    }
+                ]
+            });
+
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const savedPosts = user.savedPosts;
+
+        res.status(200).json(savedPosts);
+    } catch (error) {
+        console.error("Error in getSavedPosts controller", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
