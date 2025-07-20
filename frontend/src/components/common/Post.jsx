@@ -1,7 +1,7 @@
 import { FaRegComment } from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
-import { FaRegBookmark } from "react-icons/fa6";
+import { FaRegBookmark, FaBookmark } from "react-icons/fa6";
 import { FaTrash } from "react-icons/fa";
 import LoadingSpinner from "./LoadingSpinner.jsx"
 
@@ -47,6 +47,7 @@ const Post = ({ post }) => {
 	const postOwner = post.user;
 	const isMyPost = authUser?._id === postOwner._id;
 	const isLiked = post.likes.includes(authUser?._id);
+	const isSaved = authUser?.savedPosts.includes(post._id);
 	const formattedDate = formatPostDate(post.createdAt);
 
 	// Deleting a post mutation
@@ -148,6 +149,36 @@ const Post = ({ post }) => {
 		}
 	});
 
+	// Saving/unsaving a post mutation
+	const { mutate: saveUnsave, isPending: isSavingUnsaving } = useMutation({
+		mutationFn: async () => {
+			const res = await fetch(`/api/posts/save/${post._id}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			})
+
+			const data = await res.json();
+			if (!res.ok) {
+				throw new Error(data.error || "Something went wrong");
+			}
+
+			return data;
+		},
+		onSuccess: () => {
+			if (!isSaved) {
+				toast.success("Post saved successfully")
+			} else {
+				toast.success("Post unsaved successfully")
+			}
+			queryClient.invalidateQueries({ queryKey: ["posts"] });
+		},
+		onError: (error) => {
+			toast.error(error.message)
+		}
+	});
+
 	const handleDeletePost = () => {
 		deletePost();
 	};
@@ -161,6 +192,10 @@ const Post = ({ post }) => {
 	const handleLikePost = () => {
 		if (isLiking) return; // Prevent multiple clicks while liking/unliking
 		likePost();
+	};
+
+	const handleSaveUnsavePost = () => {
+		saveUnsave();
 	};
 
 	return (
@@ -279,8 +314,10 @@ const Post = ({ post }) => {
 								</span>
 							</div>
 						</div>
-						<div className='flex w-1/3 justify-end gap-2 items-center'>
-							<FaRegBookmark className='w-4 h-4 text-slate-500 cursor-pointer' />
+						<div className='flex w-1/3 justify-end gap-2 items-center' onClick={handleSaveUnsavePost}>
+							{isSavingUnsaving && <LoadingSpinner size='sm' />}
+							{!isSaved && !isSavingUnsaving && <FaRegBookmark className='w-4 h-4 text-slate-500 cursor-pointer' />}
+							{isSaved && !isSavingUnsaving && <FaBookmark className='w-4 h-4 text-primary opacity-80 cursor-pointer' />}
 						</div>
 					</div>
 				</div>

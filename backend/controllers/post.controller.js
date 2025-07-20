@@ -289,6 +289,27 @@ export const saveUnsavePost = async (req, res) => {
     }
 };
 
+export const unsaveAllPosts = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        while (user.savedPosts.length > 0) {
+            user.savedPosts.pop();
+        }
+        user.save();
+        res.status(200).json({ message: "All posts unsaved successfully" });
+
+    } catch (error) {
+        console.error("Error in unsaveAllPosts controller", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
 export const getSavedPosts = async (req, res) => {
     try {
         const userId = req.user._id;

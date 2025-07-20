@@ -1,7 +1,7 @@
 import express from "express";
 import { protectRoute } from "../middlewear/protectRoute.js";
 
-import { createPost, deletePost, commentOnPost, likeUnlikePost, getAllPosts, getLikedPosts, getFollowingPosts, getUserPosts, saveUnsavePost, getSavedPosts } from "../controllers/post.controller.js";
+import { createPost, deletePost, commentOnPost, likeUnlikePost, getAllPosts, getLikedPosts, getFollowingPosts, getUserPosts, saveUnsavePost, getSavedPosts, unsaveAllPosts } from "../controllers/post.controller.js";
 
 const router = express.Router();
 
@@ -14,6 +14,7 @@ router.post("/create", protectRoute, createPost);
 router.post("/like/:id", protectRoute, likeUnlikePost);
 router.post("/comment/:id", protectRoute, commentOnPost);
 router.post("/save/:id", protectRoute, saveUnsavePost);
+router.post("/unsave", protectRoute, unsaveAllPosts)
 router.delete("/:id", protectRoute, deletePost);
 
 export default router;

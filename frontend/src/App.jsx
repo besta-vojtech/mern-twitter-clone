@@ -7,6 +7,7 @@ import SignUpPage from "./pages/auth/signup/SignUpPage.jsx"
 import HomePage from "./pages/home/HomePage.jsx"
 import NotificationPage from "./pages/notifications/NotificationPage.jsx";
 import ProfilePage from "./pages/profile/ProfilePage.jsx";
+import SavedPostsPage from "./pages/savedPosts/SavedPostsPage.jsx"
 
 import RightPanel from "./components/common/RightPanel.jsx";
 import Sidebar from "./components/common/Sidebar.jsx";
@@ -59,6 +60,7 @@ function App() {
         <Route path='/login' element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
         <Route path='/notifications' element={authUser ? <NotificationPage /> : <Navigate to="/login" />} />
         <Route path='/profile/:username' element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+        <Route path='/saved' element={authUser ? <SavedPostsPage /> : <Navigate to="/login" />} />
       </Routes>
       {authUser && <RightPanel />}
       <Toaster />
