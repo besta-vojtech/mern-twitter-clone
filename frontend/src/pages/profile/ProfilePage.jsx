@@ -97,7 +97,7 @@ const ProfilePage = () => {
 	});
 
 	// Custom hook to update the cover and profile images (update the user profile)
-	const { updateProfile, isUpdating } = useUpdateUserProfile(authUser, setCoverImg, setProfileImg);
+	const { updateProfile, isUpdating } = useUpdateUserProfile(authUser);
 
 	return (
 		<>

@@ -1,19 +1,19 @@
 Emma Brown	@emmabrown	Lover of nature and technology.	https://www.brown.com emmabrown123
 
-Oliver Smith	@oliversmith	Aspiring writer and avid reader.	https://www.smith.com
+Oliver Smith	@oliversmith	Aspiring writer and avid reader.	https://www.smith.com oliversmith123
 
 Ava Johnson	@avajohnson	Foodie and travel enthusiast.	https://www.johnson.com avajohnson123
 
-Lucas Williams	@lucaswilliams	Tech geek and coffee lover.	https://www.williams.com
+Lucas Williams	@lucaswilliams	Tech geek and coffee lover.	https://www.williams.com lucaswilliams123
 
-Sophia Jones	@sophiajones	Fitness fanatic and weekend hiker.	https://www.jones.com
+Sophia Jones	@sophiajones	Fitness fanatic and weekend hiker.	https://www.jones.com sophiajones123
 
-Jack Miller	@jackmiller	Photographer capturing moments.	https://www.miller.com
+Jack Miller	@jackmiller	Photographer capturing moments.	https://www.miller.com jackmiller123
 
-Mia Davis	@miadavis	Music is life, always playing.	https://www.davis.com
+Mia Davis	@miadavis	Music is life, always playing.	https://www.davis.com miadavis123
 
-Noah Garcia	@noahgarcia	Passion for coding and innovation.	https://www.garcia.com
+Noah Garcia	@noahgarcia	Passion for coding and innovation.	https://www.garcia.com noahgarcia123
 
-Isabella Rodriguez	@isabellarodriguez	Dreamer, believer, achiever.	https://www.rodriguez.com
+Isabella Rodriguez	@isabellarodriguez	Dreamer, believer, achiever.	https://www.rodriguez.com isabellarodriguez123
 
-Liam Martinez	@liammartinez	Exploring the world one step at a time.	https://www.martinez.com
+Liam Martinez	@liammartinez	Exploring the world one step at a time.	https://www.martinez.com liammartinez123

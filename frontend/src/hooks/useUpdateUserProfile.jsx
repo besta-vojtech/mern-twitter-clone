@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 // Custom hook that updates the user profile
-const useUpdateUserProfile = (authUser, setCoverImg, setProfileImg) => {
+const useUpdateUserProfile = (authUser) => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
 
@@ -38,9 +38,6 @@ const useUpdateUserProfile = (authUser, setCoverImg, setProfileImg) => {
                 queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
                 queryClient.invalidateQueries({ queryKey: ["authUser"] }) // for case when authUser updates his profile so the logout div in the botton left is also updated
             ]);
-
-            setCoverImg(null);
-            setProfileImg(null);
         },
         onError: (error) => {
             toast.error(error.message);
