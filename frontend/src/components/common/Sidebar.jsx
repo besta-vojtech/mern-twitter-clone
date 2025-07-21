@@ -110,7 +110,7 @@ const Sidebar = () => {
 							className='flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full duration-300 py-2 pl-2 pr-4 max-w-fit cursor-pointer'
 						>
 							<FaBookmark className='w-6 h-6' />
-							<span className='text-lg hidden md:block'>Saved Posts</span>
+							<span className='text-lg hidden md:block'>Saved</span>
 						</Link>
 					</li>
 				</ul>

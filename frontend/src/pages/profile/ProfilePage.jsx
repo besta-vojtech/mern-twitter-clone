@@ -97,7 +97,7 @@ const ProfilePage = () => {
 	});
 
 	// Custom hook to update the cover and profile images (update the user profile)
-	const { updateProfile, isUpdating } = useUpdateUserProfile(authUser);
+	const { updateProfile, isUpdating } = useUpdateUserProfile(authUser, setCoverImg, setProfileImg);
 
 	return (
 		<>
@@ -178,8 +178,6 @@ const ProfilePage = () => {
 										className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
 										onClick={() => {
 											updateProfile({ coverImg, profileImg });
-											setCoverImg(null);
-											setProfileImg(null);
 										}}
 									>
 										{isUpdating ? <LoadingSpinner size="sm" /> : "Save Changes"}
@@ -200,12 +198,12 @@ const ProfilePage = () => {
 											<>
 												<FaLink className='w-3 h-3 text-slate-500' />
 												<a
-													href='https://youtube.com/@asaprogrammer_'
+													href="#"
 													target='_blank'
 													rel='noreferrer'
 													className='text-sm text-blue-500 hover:underline'
 												>
-													youtube.com/@asaprogrammer_
+													{user?.link}
 												</a>
 											</>
 										</div>
