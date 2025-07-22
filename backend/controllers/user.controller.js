@@ -137,7 +137,7 @@ export const updateUser = async (req, res) => {
         if (coverImg) {
 
             if (user.coverImg) {
-                await cloudinary.uploader.destroy(user.profileImg.split("/").pop().split(".")[0]) // extracting image id from the image URL
+                await cloudinary.uploader.destroy(user.coverImg.split("/").pop().split(".")[0]) // extracting image id from the image URL
             }
 
             const uploadedResponse = await cloudinary.uploader.upload(coverImg);
