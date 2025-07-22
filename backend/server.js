@@ -21,7 +21,7 @@ cloudinary.config({
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const __dirname = path.resolve();
+const __dirname = path.resolve(); // Get the root directory of the project
 
 // Middleware
 app.use(express.json({ limit: "5mb" })) // for accessing request json bodies (req.body) // with a limit of 5mb (limit shouldn't be too high to prevent DoS attacks)
@@ -33,6 +33,14 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/notifications", notificationRoutes);
+
+if (process.env.NODE_ENV === "production") {
+    app.use(express.static(path.join(__dirname, "./frontend/dist"))); // Serve static files from the React frontend app
+
+    app.get("/*catchall", (req, res) => {
+        res.sendFile(path.resolve(__dirname, "./frontend/dist/index.html")); // Serve the React app for any other route
+    });
+}
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
